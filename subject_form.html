@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "_macros.html" import semester_options %}
+{% block title %}{{ 'Edit' if editing else 'Add' }} Subject{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h2><i class="fa-solid fa-book-medical"></i> {{ 'Edit Subject' if editing else 'Add Subject' }}</h2><p>All fields are required.</p></div>
+  <a href="{{ url_for('subjects') }}" class="btn btn-outline-secondary"><i class="fa-solid fa-arrow-left me-1"></i> Back to Subjects</a>
+</div>
+<div class="panel form-panel">
+  <form method="post" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="row g-3">
+      <div class="col-md-6"><label class="form-label">Subject Code *</label>
+        <input class="form-control" name="code" value="{{ form.code or '' }}" maxlength="20" placeholder="e.g. BCA501" required></div>
+      <div class="col-md-6"><label class="form-label">Subject Name *</label>
+        <input class="form-control" name="name" value="{{ form.name or '' }}" maxlength="80" placeholder="e.g. Web Technologies" required></div>
+      <div class="col-md-6"><label class="form-label">Semester *</label>
+        <select class="form-select" name="semester" required>{{ semester_options(form.semester) }}</select></div>
+      <div class="col-md-6"><label class="form-label">Subject Teacher *</label>
+        <input class="form-control" name="teacher" value="{{ form.teacher or '' }}" maxlength="80" placeholder="Teacher name" required></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit"><i class="fa-solid fa-floppy-disk me-1"></i> {{ 'Update Subject' if editing else 'Save Subject' }}</button>
+      <a href="{{ url_for('subjects') }}" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

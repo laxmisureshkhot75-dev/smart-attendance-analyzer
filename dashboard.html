@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% from "_art.html" import banner_art, trophy_art %}
+{% from "_macros.html" import pill %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<section class="banner">
+  <div>
+    <h1>Smart Attendance <em>Analyser</em></h1>
+    <p>Smarter Attendance. Better Insights.</p>
+  </div>
+  {{ banner_art() }}
+</section>
+
+<section class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-icon bg-blue"><i class="fa-solid fa-users"></i></div>
+    <div><span class="stat-label">Total Students</span><strong id="statTotal">{{ s.total_students }}</strong></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon bg-green"><i class="fa-solid fa-check"></i></div>
+    <div><span class="stat-label">Present Today</span>
+      <div class="stat-row"><strong id="statPresent">{{ s.present_today }}</strong><span class="pill pill-present" id="statPresentPct">{{ s.present_pct|pctfmt }}</span></div></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon bg-red"><i class="fa-solid fa-xmark"></i></div>
+    <div><span class="stat-label">Absent Today</span>
+      <div class="stat-row"><strong id="statAbsent">{{ s.absent_today }}</strong><span class="pill pill-absent" id="statAbsentPct">{{ s.absent_pct|pctfmt }}</span></div></div>
+  </div>
+  <a class="stat-card stat-link" href="{{ url_for('analysis_page') }}#at-risk">
+    <div class="stat-icon bg-yellow"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <div><span class="stat-label">At Risk Students</span><strong id="statRisk">{{ s.at_risk }}</strong></div>
+  </a>
+</section>
+
+<section class="row g-3 mb-3">
+  <div class="col-lg-5">
+    <div class="panel h-100">
+      <h3 class="panel-title"><i class="fa-solid fa-chart-simple"></i> Attendance Overview</h3>
+      <div class="donut-wrap">
+        <div class="donut-canvas">
+          <canvas id="overviewChart" aria-label="Present versus absent doughnut chart"></canvas>
+          <div class="donut-center"><strong id="donutPct">{{ s.overall.percentage|pctfmt }}</strong><span>Overall<br>Attendance</span></div>
+        </div>
+        <ul class="donut-legend">
+          <li><i class="dot dot-green"></i><div>Present<br><small id="legPresent">{{ s.overall.present }} ({{ (100 * s.overall.present / s.overall.total)|round(1)|string + '%' if s.overall.total else '—' }})</small></div></li>
+          <li><i class="dot dot-red"></i><div>Absent<br><small id="legAbsent">{{ s.overall.absent }} ({{ (100 * s.overall.absent / s.overall.total)|round(1)|string + '%' if s.overall.total else '—' }})</small></div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="panel h-100">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h3 class="panel-title mb-0"><i class="fa-solid fa-arrow-trend-up"></i> Monthly Attendance Trend</h3>
+        <select id="trendRange" class="form-select form-select-sm trend-select">
+          <option value="week">Last 7 Days</option>
+          <option value="month" selected>This Month</option>
+          <option value="all">All Months</option>
+        </select>
+      </div>
+      <div class="chart-box"><canvas id="trendChart" aria-label="Attendance percentage trend line chart"></canvas>
+        <div class="chart-empty" id="trendEmpty" hidden>No attendance records for this period yet.</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="row g-3">
+  <div class="col-xl-9">
+    <div class="panel">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h3 class="panel-title mb-0"><i class="fa-solid fa-users"></i> Recent Attendance Records</h3>
+        <a class="btn btn-primary btn-sm rounded-pill px-3" href="{{ url_for('reports', type='daily', date_from='2000-01-01', date_to=today) }}">View All <i class="fa-solid fa-arrow-right ms-1"></i></a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-clean align-middle" id="recentTable">
+          <thead><tr><th>#</th><th>Student Name</th><th>Subject</th><th>Date</th><th>Status</th><th>Percentage</th></tr></thead>
+          <tbody id="recentBody">
+            {% for r in recent %}
+            <tr><td>{{ loop.index }}</td><td>{{ r.name }}</td><td>{{ r.subject }}</td><td>{{ r.date|dmy }}</td><td>{{ pill(r.status) }}</td><td>{{ r.pct|pctfmt }}</td></tr>
+            {% else %}
+            <tr><td colspan="6" class="text-center text-muted py-4">No attendance marked yet. <a href="{{ url_for('attendance') }}">Mark attendance</a> to see records here.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3">
+    <div class="panel motivate h-100">
+      {{ trophy_art() }}
+      <h4 id="motTitle">{{ s.motivation_title }}</h4>
+      <p id="motText">{{ s.motivation_text }}</p>
+      <a href="{{ url_for('attendance') }}" class="btn btn-dark rounded-pill px-4"><i class="fa-solid fa-star text-warning me-1"></i> Be Your Best</a>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>window.DASHBOARD_INITIAL = {{ s|tojson }};</script>
+{% endblock %}

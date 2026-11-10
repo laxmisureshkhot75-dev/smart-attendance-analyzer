@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h2><i class="fa-solid fa-gear"></i> Settings</h2><p>Manage the admin account and college information.</p></div>
+  <a href="{{ url_for('logout') }}" class="btn btn-outline-danger"><i class="fa-solid fa-right-from-bracket me-1"></i> Logout</a>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6"><div class="panel h-100">
+    <h3 class="panel-title"><i class="fa-solid fa-user-shield"></i> Admin Profile</h3>
+    <form method="post" action="{{ url_for('settings_profile') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label class="form-label">Username</label>
+      <input class="form-control mb-3" value="{{ admin.username }}" disabled>
+      <label class="form-label">Full Name *</label>
+      <input class="form-control mb-3" name="full_name" value="{{ admin.full_name }}" maxlength="60" required>
+      <label class="form-label">Email</label>
+      <input class="form-control mb-3" type="email" name="email" value="{{ admin.email }}" maxlength="120">
+      <button class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-1"></i> Save Profile</button>
+    </form>
+  </div></div>
+
+  <div class="col-lg-6"><div class="panel h-100">
+    <h3 class="panel-title"><i class="fa-solid fa-building-columns"></i> College Information & Academic Year</h3>
+    <form method="post" action="{{ url_for('settings_college') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label class="form-label">College Name *</label>
+      <input class="form-control mb-3" name="college_name" value="{{ cfg.college_name }}" maxlength="120" required>
+      <label class="form-label">College Address</label>
+      <input class="form-control mb-3" name="college_address" value="{{ cfg.college_address }}" maxlength="200">
+      <div class="row g-3 mb-3">
+        <div class="col-6"><label class="form-label">Department</label><input class="form-control" name="department" value="{{ cfg.department }}" maxlength="60"></div>
+        <div class="col-6"><label class="form-label">Academic Year *</label><input class="form-control" name="academic_year" value="{{ cfg.academic_year }}" placeholder="2026-2027" required></div>
+      </div>
+      <button class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-1"></i> Save College Info</button>
+    </form>
+  </div></div>
+
+  <div class="col-lg-6"><div class="panel h-100">
+    <h3 class="panel-title"><i class="fa-solid fa-id-badge"></i> Change Username</h3>
+    <form method="post" action="{{ url_for('settings_username') }}" autocomplete="off">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label class="form-label">New Username *</label>
+      <input class="form-control mb-3" name="new_username" value="{{ admin.username }}" minlength="3" maxlength="30" required>
+      <label class="form-label">Current Password * <small class="text-muted">(to confirm it's you)</small></label>
+      <input class="form-control mb-3" type="password" name="current_password" autocomplete="current-password" required>
+      <button class="btn btn-primary"><i class="fa-solid fa-pen me-1"></i> Change Username</button>
+    </form>
+  </div></div>
+
+  <div class="col-lg-6"><div class="panel h-100">
+    <h3 class="panel-title"><i class="fa-solid fa-key"></i> Change Password</h3>
+    <form method="post" action="{{ url_for('settings_password') }}" autocomplete="off">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label class="form-label">Current Password *</label>
+      <input class="form-control mb-3" type="password" name="current_password" autocomplete="current-password" required>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6"><label class="form-label">New Password * <small class="text-muted">(min 6)</small></label>
+          <input class="form-control" type="password" name="new_password" minlength="6" autocomplete="new-password" required></div>
+        <div class="col-md-6"><label class="form-label">Confirm New Password *</label>
+          <input class="form-control" type="password" name="confirm_password" minlength="6" autocomplete="new-password" required></div>
+      </div>
+      <button class="btn btn-primary"><i class="fa-solid fa-lock me-1"></i> Change Password</button>
+    </form>
+  </div></div>
+</div>
+{% endblock %}

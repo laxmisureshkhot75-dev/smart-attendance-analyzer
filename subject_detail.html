@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "_macros.html" import pct_bar, pill %}
+{% block title %}{{ sub.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h2><i class="fa-solid fa-book"></i> {{ sub.name }}</h2><p>Subject code: <b>{{ sub.code }}</b></p></div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('attendance', subject_id=sub.id) }}" class="btn btn-primary"><i class="fa-solid fa-calendar-check me-1"></i> Mark Attendance</a>
+    <a href="{{ url_for('subject_edit', sid=sub.id) }}" class="btn btn-outline-primary"><i class="fa-solid fa-pen me-1"></i> Edit</a>
+    <a href="{{ url_for('subjects') }}" class="btn btn-outline-secondary"><i class="fa-solid fa-arrow-left me-1"></i> Back</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-lg-5"><div class="panel h-100">
+    <h3 class="panel-title"><i class="fa-solid fa-circle-info"></i> Subject Details</h3>
+    <dl class="detail-list">
+      <dt>Code</dt><dd>{{ sub.code }}</dd><dt>Name</dt><dd>{{ sub.name }}</dd>
+      <dt>Semester</dt><dd>{{ sub.semester }}</dd><dt>Teacher</dt><dd>{{ sub.teacher }}</dd>
+    </dl></div></div>
+  <div class="col-lg-7"><div class="panel h-100">
+    <h3 class="panel-title"><i class="fa-solid fa-chart-pie"></i> Attendance Summary</h3>
+    <div class="mini-stats">
+      <div><span>Total Records</span><b>{{ sub.total }}</b></div>
+      <div><span>Present</span><b class="text-success">{{ sub.present }}</b></div>
+      <div><span>Absent</span><b class="text-danger">{{ sub.absent }}</b></div>
+      <div><span>Attendance</span><b>{{ sub.percentage|pctfmt }}</b></div>
+    </div></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7"><div class="panel h-100">
+    <h3 class="panel-title"><i class="fa-solid fa-users"></i> Student-wise Attendance in this Subject</h3>
+    {% if students %}
+    <div class="table-responsive scroll-box"><table class="table table-clean align-middle">
+      <thead><tr><th>Reg No</th><th>Name</th><th>Present / Total</th><th style="min-width:140px">Attendance</th></tr></thead>
+      <tbody>{% for s in students %}<tr><td>{{ s.reg_no }}</td><td>{{ s.name }}</td><td>{{ s.present }} / {{ s.total }}</td><td>{{ pct_bar(s.percentage) }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+    {% else %}<p class="text-muted mb-0">No students registered yet.</p>{% endif %}
+  </div></div>
+  <div class="col-lg-5"><div class="panel h-100">
+    <h3 class="panel-title"><i class="fa-solid fa-calendar-days"></i> Recent Class Days</h3>
+    {% if days %}
+    <table class="table table-clean align-middle"><thead><tr><th>Date</th><th>Present</th><th>Absent</th><th>%</th></tr></thead>
+      <tbody>{% for d in days %}<tr><td>{{ d.key|dmy }}</td><td>{{ d.present }}</td><td>{{ d.absent }}</td><td>{{ d.percentage|pctfmt }}</td></tr>{% endfor %}</tbody></table>
+    {% else %}<p class="text-muted mb-0">No attendance marked for this subject yet.</p>{% endif %}
+  </div></div>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_macros.html" import semester_options %}
+{% block title %}{{ 'Edit' if editing else 'Add' }} Student{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h2><i class="fa-solid fa-user-plus"></i> {{ 'Edit Student' if editing else 'Add New Student' }}</h2>
+    <p>Fields marked * are required.</p></div>
+  <a href="{{ url_for('students') }}" class="btn btn-outline-secondary"><i class="fa-solid fa-arrow-left me-1"></i> Back to Students</a>
+</div>
+<div class="panel form-panel">
+  <form method="post" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="row g-3">
+      <div class="col-md-6"><label class="form-label">Student ID / Register Number *</label>
+        <input class="form-control" name="reg_no" value="{{ form.reg_no or '' }}" maxlength="30" placeholder="e.g. U01AB23S0001" required></div>
+      <div class="col-md-6"><label class="form-label">Student Name *</label>
+        <input class="form-control" name="name" value="{{ form.name or '' }}" maxlength="80" placeholder="Full name" required></div>
+      <div class="col-md-6"><label class="form-label">Email</label>
+        <input class="form-control" type="email" name="email" value="{{ form.email or '' }}" maxlength="120" placeholder="student@example.com"></div>
+      <div class="col-md-6"><label class="form-label">Phone Number</label>
+        <input class="form-control" name="phone" value="{{ form.phone or '' }}" maxlength="14" inputmode="tel" placeholder="10 digit mobile number"></div>
+      <div class="col-md-6"><label class="form-label">Class</label>
+        <input class="form-control" name="class_name" value="{{ form.class_name or 'BCA' }}" maxlength="30" placeholder="e.g. BCA"></div>
+      <div class="col-md-6"><label class="form-label">Semester *</label>
+        <select class="form-select" name="semester" required>{{ semester_options(form.semester) }}</select></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit"><i class="fa-solid fa-floppy-disk me-1"></i> {{ 'Update Student' if editing else 'Save Student' }}</button>
+      <a href="{{ url_for('students') }}" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

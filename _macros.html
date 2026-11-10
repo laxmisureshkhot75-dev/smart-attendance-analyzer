@@ -1,0 +1,24 @@
+{# Reusable small pieces #}
+{% macro pill(text) -%}
+<span class="pill pill-{{ text|string|lower|replace(' ', '-') }}">
+  {%- if text == 'Present' %}<i class="fa-solid fa-circle-check"></i> {% elif text == 'Absent' %}<i class="fa-solid fa-circle-xmark"></i> {% endif -%}
+  {{ text }}</span>
+{%- endmacro %}
+
+{% macro pct_bar(p) -%}
+{% if p is none %}<span class="text-muted">—</span>
+{% else %}<div class="pct-cell"><div class="pct-bar"><span class="{{ 'bar-red' if p < 75 else ('bar-yellow' if p < 85 else 'bar-green') }}" style="width: {{ p }}%"></span></div><b>{{ p|pctfmt }}</b></div>{% endif %}
+{%- endmacro %}
+
+{% macro empty(icon, title, text, link=None, link_text=None) -%}
+<div class="empty-state">
+  <i class="fa-solid {{ icon }}"></i>
+  <h5>{{ title }}</h5>
+  <p>{{ text }}</p>
+  {% if link %}<a href="{{ link }}" class="btn btn-primary btn-sm">{{ link_text }}</a>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro semester_options(selected) -%}
+{% for n in range(1, 9) %}<option value="{{ n }}" {{ 'selected' if selected|string == n|string }}>Semester {{ n }}</option>{% endfor %}
+{%- endmacro %}

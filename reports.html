@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% from "_macros.html" import pill, empty %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<div class="page-head no-print">
+  <div><h2><i class="fa-solid fa-file-pdf"></i> Reports</h2><p>Generate a report, then download it as PDF, export CSV or print it.</p></div>
+</div>
+
+<div class="panel mb-3 no-print">
+  <form method="get" action="{{ url_for('reports') }}" class="row g-3 align-items-end">
+    <div class="col-md-4 col-lg-3"><label class="form-label">Report Type</label>
+      <select name="type" class="form-select">{% for key, label in report_types %}<option value="{{ key }}" {{ 'selected' if key == rtype }}>{{ label }}</option>{% endfor %}</select></div>
+    <div class="col-md-4 col-lg-2"><label class="form-label">From Date</label><input type="date" name="date_from" class="form-control" value="{{ f.date_from }}"></div>
+    <div class="col-md-4 col-lg-2"><label class="form-label">To Date</label><input type="date" name="date_to" class="form-control" value="{{ f.date_to }}"></div>
+    <div class="col-md-6 col-lg-2"><label class="form-label">Student</label>
+      <select name="student_id" class="form-select"><option value="">All</option>
+        {% for s in students_pick %}<option value="{{ s.id }}" {{ 'selected' if f.student_id == s.id }}>{{ s.name }}</option>{% endfor %}</select></div>
+    <div class="col-md-6 col-lg-2"><label class="form-label">Subject</label>
+      <select name="subject_id" class="form-select"><option value="">All</option>
+        {% for s in subjects_pick %}<option value="{{ s.id }}" {{ 'selected' if f.subject_id == s.id }}>{{ s.name }}</option>{% endfor %}</select></div>
+    <div class="col-lg-1"><button class="btn btn-primary w-100" type="submit" title="Generate report"><i class="fa-solid fa-play"></i></button></div>
+  </form>
+  <div class="d-flex flex-wrap gap-2 mt-3 pt-3 border-top">
+    <a class="btn btn-danger" href="{{ url_for('report_pdf') }}?{{ qs }}"><i class="fa-solid fa-file-pdf me-1"></i> Download PDF</a>
+    <a class="btn btn-success" href="{{ url_for('report_csv') }}?{{ qs }}"><i class="fa-solid fa-file-csv me-1"></i> Export CSV</a>
+    <button class="btn btn-secondary" type="button" onclick="window.print()"><i class="fa-solid fa-print me-1"></i> Print Report</button>
+  </div>
+</div>
+
+<div class="panel report-sheet">
+  <div class="report-head">
+    <h3>{{ settings.get('college_name', '') }}</h3>
+    {% if settings.get('college_address') %}<div class="text-muted small">{{ settings.get('college_address') }}</div>{% endif %}
+    <h4>{{ report.title }}</h4>
+    <div class="text-muted small">Academic Year {{ settings.get('academic_year', '') }} · Generated {{ generated.strftime('%d-%m-%Y %H:%M') }}
+      {% if f.date_from or f.date_to %} · Period: {{ f.date_from|dmy or 'start' }} to {{ f.date_to|dmy or 'today' }}{% endif %}</div>
+  </div>
+  {% if report.note %}<div class="alert alert-info py-2 small">{{ report.note }}</div>{% endif %}
+  {% if report.summary %}
+  <div class="summary-chips">{% for label, value in report.summary %}<div><span>{{ label }}</span><b>{{ value }}</b></div>{% endfor %}</div>
+  {% endif %}
+
+  {% if report.rows %}
+  <div class="table-responsive">
+    <table class="table table-clean report-table align-middle">
+      <thead><tr>{% for h in report.headers %}<th>{{ h }}</th>{% endfor %}</tr></thead>
+      <tbody>
+      {% for row in report.rows %}
+        <tr>{% for cell in row %}
+          <td>{% if cell in ('Present', 'Absent', 'At Risk', 'Low', 'Good', 'Excellent', 'No Data') %}{{ pill(cell) }}{% else %}{{ cell }}{% endif %}</td>
+        {% endfor %}</tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if total_rows > report.rows|length %}<p class="text-muted small no-print">Showing the first {{ report.rows|length }} of {{ total_rows }} rows. Download the PDF or CSV to get all rows.</p>{% endif %}
+  {% else %}
+    {{ empty('fa-file-circle-xmark', 'No records found', 'There is no attendance data for the selected filters.') }}
+  {% endif %}
+</div>
+{% endblock %}

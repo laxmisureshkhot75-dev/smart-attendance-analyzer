@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% from "_macros.html" import pct_bar, pill, empty %}
+{% block title %}Analysis{% endblock %}
+
+{% macro student_list(items, empty_text) %}
+  {% if items %}
+  <div class="table-responsive scroll-box"><table class="table table-clean align-middle">
+    <thead><tr><th>Reg No</th><th>Name</th><th>Present / Total</th><th style="min-width:130px">Attendance</th></tr></thead>
+    <tbody>{% for s in items %}<tr><td>{{ s.reg_no }}</td><td><a href="{{ url_for('student_detail', sid=s.id) }}">{{ s.name }}</a></td><td>{{ s.present }} / {{ s.total }}</td><td>{{ pct_bar(s.percentage) }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<p class="text-muted mb-0">{{ empty_text }}</p>{% endif %}
+{% endmacro %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2><i class="fa-solid fa-chart-simple"></i> Attendance Analysis</h2>
+    <p>Every number and chart here is calculated from the saved attendance records.</p></div>
+</div>
+
+<div class="panel mb-3">
+  <form method="get" class="row g-3 align-items-end">
+    <div class="col-md-3"><label class="form-label">Student</label>
+      <select name="student_id" class="form-select"><option value="">All students</option>
+        {% for s in students_pick %}<option value="{{ s.id }}" {{ 'selected' if f.student_id == s.id }}>{{ s.name }} ({{ s.reg_no }})</option>{% endfor %}</select></div>
+    <div class="col-md-3"><label class="form-label">Subject</label>
+      <select name="subject_id" class="form-select"><option value="">All subjects</option>
+        {% for s in subjects_pick %}<option value="{{ s.id }}" {{ 'selected' if f.subject_id == s.id }}>{{ s.name }}</option>{% endfor %}</select></div>
+    <div class="col-md-2"><label class="form-label">Date</label><input type="date" name="date" class="form-control" value="{{ f.date }}"></div>
+    <div class="col-md-2"><label class="form-label">Month</label><input type="month" name="month" class="form-control" value="{{ f.month }}"></div>
+    <div class="col-md-2 d-flex gap-2"><button class="btn btn-primary flex-grow-1" type="submit"><i class="fa-solid fa-filter me-1"></i> Apply</button>
+      <a href="{{ url_for('analysis_page') }}" class="btn btn-outline-secondary" title="Reset filters"><i class="fa-solid fa-rotate-left"></i></a></div>
+  </form>
+</div>
+
+{% if ov.total == 0 %}
+<div class="panel">
+  {% if filtered %}{{ empty('fa-filter-circle-xmark', 'No records match these filters', 'Try different filters or reset them.', url_for('analysis_page'), 'Reset filters') }}
+  {% else %}{{ empty('fa-chart-simple', 'No attendance data yet', 'Mark attendance first and the analysis will appear here.', url_for('attendance'), 'Mark Attendance') }}{% endif %}
+</div>
+{% else %}
+
+<section class="stat-grid">
+  <div class="stat-card"><div class="stat-icon bg-blue"><i class="fa-solid fa-percent"></i></div>
+    <div><span class="stat-label">Overall Attendance</span><strong>{{ ov.percentage|pctfmt }}</strong></div></div>
+  <div class="stat-card"><div class="stat-icon bg-slate"><i class="fa-solid fa-clipboard-list"></i></div>
+    <div><span class="stat-label">Total Records</span><strong>{{ ov.total }}</strong></div></div>
+  <div class="stat-card"><div class="stat-icon bg-green"><i class="fa-solid fa-check"></i></div>
+    <div><span class="stat-label">Present</span><strong>{{ ov.present }}</strong></div></div>
+  <div class="stat-card"><div class="stat-icon bg-red"><i class="fa-solid fa-xmark"></i></div>
+    <div><span class="stat-label">Absent</span><strong>{{ ov.absent }}</strong></div></div>
+</section>
+
+<section class="row g-3 mb-3">
+  <div class="col-lg-4"><div class="panel h-100"><h3 class="panel-title"><i class="fa-solid fa-chart-pie"></i> Present vs Absent</h3>
+    <div class="chart-box sm"><canvas id="chPie"></canvas></div></div></div>
+  <div class="col-lg-8"><div class="panel h-100"><h3 class="panel-title"><i class="fa-solid fa-book-open"></i> Subject-wise Attendance %</h3>
+    <div class="chart-box sm"><canvas id="chSubjects"></canvas></div></div></div>
+</section>
+
+<section class="row g-3 mb-3">
+  <div class="col-12"><div class="panel"><h3 class="panel-title"><i class="fa-solid fa-user-graduate"></i> Student-wise Attendance %</h3>
+    <div class="chart-box" id="studentChartBox"><canvas id="chStudents"></canvas></div>
+    <div class="table-responsive scroll-box mt-3"><table class="table table-clean align-middle">
+      <thead><tr><th>#</th><th>Reg No</th><th>Name</th><th>Total</th><th>Present</th><th>Absent</th><th style="min-width:140px">Attendance</th><th>Status</th></tr></thead>
+      <tbody>{% for s in stud %}<tr><td>{{ loop.index }}</td><td>{{ s.reg_no }}</td><td><a href="{{ url_for('student_detail', sid=s.id) }}">{{ s.name }}</a></td><td>{{ s.total }}</td><td>{{ s.present }}</td><td>{{ s.absent }}</td><td>{{ pct_bar(s.percentage) }}</td><td>{{ pill(s.status) }}</td></tr>{% endfor %}</tbody>
+    </table></div></div></div>
+</section>
+
+<section class="row g-3 mb-3">
+  <div class="col-12"><div class="panel"><h3 class="panel-title"><i class="fa-solid fa-book"></i> Subject-wise Analysis</h3>
+    <div class="table-responsive"><table class="table table-clean align-middle">
+      <thead><tr><th>Code</th><th>Subject</th><th>Teacher</th><th>Total</th><th>Present</th><th>Absent</th><th style="min-width:140px">Attendance</th></tr></thead>
+      <tbody>{% for s in subj %}<tr><td>{{ s.code }}</td><td><a href="{{ url_for('subject_detail', sid=s.id) }}">{{ s.name }}</a></td><td>{{ s.teacher }}</td><td>{{ s.total }}</td><td>{{ s.present }}</td><td>{{ s.absent }}</td><td>{{ pct_bar(s.percentage) }}</td></tr>{% endfor %}</tbody>
+    </table></div></div></div>
+</section>
+
+<section class="panel mb-3">
+  <ul class="nav nav-pills tab-pills mb-3" role="tablist">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tabDaily" type="button">Daily</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabWeekly" type="button">Weekly</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabMonthly" type="button">Monthly</button></li>
+  </ul>
+  <div class="tab-content">
+    <div class="tab-pane fade show active" id="tabDaily">
+      <h3 class="panel-title"><i class="fa-solid fa-calendar-day"></i> Daily Attendance Analysis</h3>
+      <div class="chart-box sm"><canvas id="chDaily"></canvas></div>
+      <div class="table-responsive scroll-box mt-3"><table class="table table-clean"><thead><tr><th>Date</th><th>Total</th><th>Present</th><th>Absent</th><th>Attendance</th></tr></thead>
+        <tbody>{% for d in daily %}<tr><td>{{ d.key|dmy }}</td><td>{{ d.total }}</td><td>{{ d.present }}</td><td>{{ d.absent }}</td><td>{{ pct_bar(d.percentage) }}</td></tr>{% endfor %}</tbody></table></div>
+    </div>
+    <div class="tab-pane fade" id="tabWeekly">
+      <h3 class="panel-title"><i class="fa-solid fa-calendar-week"></i> Weekly Attendance Analysis</h3>
+      <div class="chart-box sm"><canvas id="chWeekly"></canvas></div>
+      <div class="table-responsive scroll-box mt-3"><table class="table table-clean"><thead><tr><th>Week</th><th>Total</th><th>Present</th><th>Absent</th><th>Attendance</th></tr></thead>
+        <tbody>{% for d in weekly %}<tr><td>{{ week_label(d.key) }}</td><td>{{ d.total }}</td><td>{{ d.present }}</td><td>{{ d.absent }}</td><td>{{ pct_bar(d.percentage) }}</td></tr>{% endfor %}</tbody></table></div>
+    </div>
+    <div class="tab-pane fade" id="tabMonthly">
+      <h3 class="panel-title"><i class="fa-solid fa-calendar"></i> Monthly Attendance Analysis</h3>
+      <div class="chart-box sm"><canvas id="chMonthly"></canvas></div>
+      <div class="table-responsive scroll-box mt-3"><table class="table table-clean"><thead><tr><th>Month</th><th>Total</th><th>Present</th><th>Absent</th><th>Attendance</th></tr></thead>
+        <tbody>{% for d in monthly %}<tr><td>{{ month_label(d.key) }}</td><td>{{ d.total }}</td><td>{{ d.present }}</td><td>{{ d.absent }}</td><td>{{ pct_bar(d.percentage) }}</td></tr>{% endfor %}</tbody></table></div>
+    </div>
+  </div>
+</section>
+
+<p class="legend-note"><span class="pill pill-excellent">Excellent ≥ 90%</span> <span class="pill pill-good">Good 85–89.9%</span> <span class="pill pill-low">Low 75–84.9%</span> <span class="pill pill-at-risk">At Risk &lt; 75%</span></p>
+<section class="row g-3">
+  <div class="col-lg-4"><div class="panel h-100"><h3 class="panel-title"><i class="fa-solid fa-circle-exclamation text-warning"></i> Low Attendance ({{ lists.low|length }})</h3>
+    {{ student_list(lists.low, 'No students in the low band.') }}</div></div>
+  <div class="col-lg-4" id="at-risk"><div class="panel h-100"><h3 class="panel-title"><i class="fa-solid fa-triangle-exclamation text-danger"></i> At Risk, below 75% ({{ lists.risk|length }})</h3>
+    {{ student_list(lists.risk, 'No students are at risk.') }}</div></div>
+  <div class="col-lg-4"><div class="panel h-100"><h3 class="panel-title"><i class="fa-solid fa-trophy text-success"></i> Excellent Attendance ({{ lists.excellent|length }})</h3>
+    {{ student_list(lists.excellent, 'No students with 90% or more yet.') }}</div></div>
+</section>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+{% if ov.total %}<script id="analysis-data" type="application/json">{{ chart|tojson }}</script>{% endif %}
+{% endblock %}

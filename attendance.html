@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% from "_macros.html" import empty %}
+{% block title %}Mark Attendance{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h2><i class="fa-solid fa-calendar-check"></i> Mark Attendance</h2><p>Choose a date and subject, mark each student, then save. Saving again for the same date and subject updates the records (no duplicates).</p></div>
+</div>
+
+{% if not subjects %}
+<div class="panel">{{ empty('fa-book-open', 'Add a subject first', 'You need at least one subject before marking attendance.', url_for('subject_add'), 'Add Subject') }}</div>
+{% else %}
+<div class="panel mb-3">
+  <form method="get" action="{{ url_for('attendance') }}" class="row g-3 align-items-end" id="loadForm">
+    <div class="col-md-3"><label class="form-label">Date</label>
+      <input type="date" class="form-control" name="date" value="{{ sel_date }}" max="{{ today }}" required></div>
+    <div class="col-md-4"><label class="form-label">Subject</label>
+      <select class="form-select" name="subject_id" required>
+        <option value="">— Select subject —</option>
+        {% for s in subjects %}<option value="{{ s.id }}" {{ 'selected' if sel_subject and sel_subject.id == s.id }}>{{ s.code }} - {{ s.name }} (Sem {{ s.semester }})</option>{% endfor %}
+      </select></div>
+    <div class="col-md-3"><div class="form-check mb-2">
+      <input class="form-check-input" type="checkbox" name="semester_only" value="1" id="semOnly" {{ 'checked' if sem_only }}>
+      <label class="form-check-label" for="semOnly">Only students of the subject's semester</label></div></div>
+    <div class="col-md-2"><button class="btn btn-primary w-100" type="submit"><i class="fa-solid fa-users-viewfinder me-1"></i> Load Students</button></div>
+  </form>
+</div>
+
+{% if sel_subject %}
+  {% if students %}
+  <div class="panel">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <div>
+        <h3 class="panel-title mb-1"><i class="fa-solid fa-list-check"></i> {{ sel_subject.name }} — {{ sel_date|dmy }}</h3>
+        <span class="badge text-bg-light border">Teacher: {{ sel_subject.teacher }}</span>
+        {% if marks %}<span class="badge text-bg-warning ms-1">Attendance already saved for this day — saving will update it</span>{% endif %}
+      </div>
+      <div class="live-count"><span class="pill pill-present"><i class="fa-solid fa-circle-check"></i> Present <b id="cntPresent">0</b></span>
+        <span class="pill pill-absent"><i class="fa-solid fa-circle-xmark"></i> Absent <b id="cntAbsent">0</b></span></div>
+    </div>
+
+    <form method="post" action="{{ url_for('attendance') }}" id="attendanceForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="date" value="{{ sel_date }}">
+      <input type="hidden" name="subject_id" value="{{ sel_subject.id }}">
+      {% if sem_only %}<input type="hidden" name="semester_only" value="1">{% endif %}
+
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        <div class="input-icon flex-grow-1" style="min-width:220px"><i class="fa-solid fa-magnifying-glass"></i>
+          <input type="search" class="form-control" id="studentFilter" placeholder="Filter students by name or register number"></div>
+        <button type="button" class="btn btn-outline-success" id="markAllPresent"><i class="fa-solid fa-check-double me-1"></i> Mark All Present</button>
+        <button type="button" class="btn btn-outline-danger" id="markAllAbsent"><i class="fa-solid fa-xmark me-1"></i> Mark All Absent</button>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-clean align-middle" id="markTable">
+          <thead><tr><th>#</th><th>Reg No</th><th>Student Name</th><th>Sem</th><th>Status</th><th>Saved</th></tr></thead>
+          <tbody>
+          {% for s in students %}
+          {% set cur = marks.get(s.id) %}
+          <tr data-search="{{ (s.name ~ ' ' ~ s.reg_no)|lower }}">
+            <td>{{ loop.index }}<input type="hidden" name="student_ids" value="{{ s.id }}"></td>
+            <td><b>{{ s.reg_no }}</b></td><td>{{ s.name }}</td><td>{{ s.semester }}</td>
+            <td class="text-nowrap">
+              <input type="radio" class="btn-check status-radio" name="status_{{ s.id }}" id="p{{ s.id }}" value="Present" {{ 'checked' if cur != 'Absent' }}>
+              <label class="btn btn-sm btn-outline-success" for="p{{ s.id }}"><i class="fa-solid fa-check"></i> Present</label>
+              <input type="radio" class="btn-check status-radio" name="status_{{ s.id }}" id="a{{ s.id }}" value="Absent" {{ 'checked' if cur == 'Absent' }}>
+              <label class="btn btn-sm btn-outline-danger" for="a{{ s.id }}"><i class="fa-solid fa-xmark"></i> Absent</label>
+            </td>
+            <td>{% if cur %}<span class="pill pill-{{ cur|lower }}">{{ cur }}</span>{% else %}<span class="text-muted small">Not marked</span>{% endif %}</td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary btn-lg px-4" type="submit"><i class="fa-solid fa-floppy-disk me-1"></i> {{ 'Update Attendance' if marks else 'Save Attendance' }}</button>
+      </div>
+    </form>
+
+    {% if marks %}
+    <form method="post" action="{{ url_for('attendance_delete') }}" class="mt-3" data-confirm="Delete ALL saved attendance for {{ sel_subject.name }} on {{ sel_date|dmy }}?">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="date" value="{{ sel_date }}">
+      <input type="hidden" name="subject_id" value="{{ sel_subject.id }}">
+      <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash me-1"></i> Delete this day's attendance</button>
+    </form>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="panel">{{ empty('fa-user-plus', 'No students to show', 'Register students first (or untick the semester filter).', url_for('student_add'), 'Add New Student') }}</div>
+  {% endif %}
+{% else %}
+  <div class="panel">{{ empty('fa-hand-pointer', 'Select a subject', 'Pick a date and a subject above, then click Load Students.') }}</div>
+{% endif %}
+{% endif %}
+{% endblock %}

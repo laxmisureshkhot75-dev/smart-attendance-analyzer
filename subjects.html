@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% from "_macros.html" import pct_bar, empty %}
+{% block title %}Subjects{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h2><i class="fa-solid fa-book-open"></i> Subjects</h2><p>Manage subjects, teachers and semesters.</p></div>
+  <a href="{{ url_for('subject_add') }}" class="btn btn-primary"><i class="fa-solid fa-plus me-1"></i> Add Subject</a>
+</div>
+
+<div class="panel">
+  <form class="search-bar" method="get" action="{{ url_for('subjects') }}">
+    <div class="input-icon flex-grow-1"><i class="fa-solid fa-magnifying-glass"></i>
+      <input class="form-control" name="q" value="{{ q }}" placeholder="Search by subject code, name, teacher or semester"></div>
+    <button class="btn btn-primary" type="submit">Search</button>
+    {% if q %}<a class="btn btn-outline-secondary" href="{{ url_for('subjects') }}">Clear</a>{% endif %}
+  </form>
+
+  {% if rows %}
+  <div class="table-responsive">
+    <table class="table table-clean align-middle">
+      <thead><tr><th>#</th><th>Code</th><th>Subject Name</th><th>Semester</th><th>Teacher</th><th style="min-width:150px">Attendance</th><th class="text-end">Actions</th></tr></thead>
+      <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ loop.index }}</td><td><b>{{ r.code }}</b></td><td>{{ r.name }}</td><td>{{ r.semester }}</td><td>{{ r.teacher }}</td>
+        <td>{{ pct_bar(r.percentage) }}</td>
+        <td class="text-end text-nowrap">
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('subject_detail', sid=r.id) }}" title="View details"><i class="fa-solid fa-eye"></i></a>
+          <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('subject_edit', sid=r.id) }}" title="Edit"><i class="fa-solid fa-pen"></i></a>
+          <form method="post" action="{{ url_for('subject_delete', sid=r.id) }}" class="d-inline" data-confirm="Delete subject {{ r.name }}? All attendance records of this subject will also be deleted.">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-sm btn-outline-danger" title="Delete"><i class="fa-solid fa-trash"></i></button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="text-muted small mb-0">{{ rows|length }} subject(s) shown.</p>
+  {% elif q %}
+    {{ empty('fa-magnifying-glass', 'No matching subjects', 'Try a different search word.', url_for('subjects'), 'Show all subjects') }}
+  {% else %}
+    {{ empty('fa-book-open', 'No subjects yet', 'Add a subject so you can start marking attendance.', url_for('subject_add'), 'Add Subject') }}
+  {% endif %}
+</div>
+{% endblock %}

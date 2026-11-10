@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "_macros.html" import pct_bar, pill, empty %}
+{% block title %}Students{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h2><i class="fa-solid fa-users"></i> Students</h2><p>Manage registered students and see their attendance percentage.</p></div>
+  <a href="{{ url_for('student_add') }}" class="btn btn-primary"><i class="fa-solid fa-user-plus me-1"></i> Add New Student</a>
+</div>
+
+<div class="panel">
+  <form class="search-bar" method="get" action="{{ url_for('students') }}">
+    <div class="input-icon flex-grow-1"><i class="fa-solid fa-magnifying-glass"></i>
+      <input class="form-control" name="q" value="{{ q }}" placeholder="Search by name, register number, email, phone or class"></div>
+    <button class="btn btn-primary" type="submit">Search</button>
+    {% if q %}<a class="btn btn-outline-secondary" href="{{ url_for('students') }}">Clear</a>{% endif %}
+  </form>
+
+  {% if rows %}
+  <div class="table-responsive">
+    <table class="table table-clean align-middle">
+      <thead><tr><th>#</th><th>Reg No</th><th>Name</th><th>Email</th><th>Phone</th><th>Class / Sem</th><th style="min-width:150px">Attendance</th><th class="text-end">Actions</th></tr></thead>
+      <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td><b>{{ r.reg_no }}</b></td>
+        <td>{{ r.name }}</td>
+        <td>{{ r.email or '—' }}</td>
+        <td>{{ r.phone or '—' }}</td>
+        <td>{{ r.class_name }} / {{ r.semester }}</td>
+        <td>{{ pct_bar(r.percentage) }}</td>
+        <td class="text-end text-nowrap">
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('student_detail', sid=r.id) }}" title="View details"><i class="fa-solid fa-eye"></i></a>
+          <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('student_edit', sid=r.id) }}" title="Edit"><i class="fa-solid fa-pen"></i></a>
+          <form method="post" action="{{ url_for('student_delete', sid=r.id) }}" class="d-inline" data-confirm="Delete {{ r.name }}? All attendance records of this student will also be deleted.">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-sm btn-outline-danger" title="Delete"><i class="fa-solid fa-trash"></i></button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="text-muted small mb-0">{{ rows|length }} student(s) shown.</p>
+  {% elif q %}
+    {{ empty('fa-magnifying-glass', 'No matching students', 'Try a different search word.', url_for('students'), 'Show all students') }}
+  {% else %}
+    {{ empty('fa-user-plus', 'No students yet', 'Add your first student to start tracking attendance.', url_for('student_add'), 'Add New Student') }}
+  {% endif %}
+</div>
+{% endblock %}
